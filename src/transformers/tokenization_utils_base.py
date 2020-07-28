@@ -2079,12 +2079,12 @@ class PreTrainedTokenizerBase(SpecialTokensMixin):
                 encoded_inputs["special_tokens_mask"] = [0] * len(sequence)
 
         # Check lengths
-        if max_length is None and len(encoded_inputs["input_ids"]) > self.model_max_length and verbose:
-            logger.warning(
-                "Token indices sequence length is longer than the specified maximum sequence length "
-                "for this model ({} > {}). Running this sequence through the model will result in "
-                "indexing errors".format(len(ids), self.model_max_length)
-            )
+        # if max_length is None and len(encoded_inputs["input_ids"]) > self.model_max_length and verbose:
+        #     logger.warning(
+        #         "Token indices sequence length is longer than the specified maximum sequence length "
+        #         "for this model ({} > {}). Running this sequence through the model will result in "
+        #         "indexing errors".format(len(ids), self.model_max_length)
+        #     )
 
         # Padding
         if padding_strategy != PaddingStrategy.DO_NOT_PAD or return_attention_mask:
