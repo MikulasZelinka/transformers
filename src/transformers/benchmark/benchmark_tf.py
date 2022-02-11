@@ -125,6 +125,9 @@ class TensorFlowBenchmark(Benchmark):
     def _prepare_inference_func(self, model_name: str, batch_size: int, sequence_length: int) -> Callable[[], None]:
         config = self.config_dict[model_name]
 
+        if self.args.parallelize:
+            raise NotImplementedError"parallelize() is not supported in tensorflow."
+
         if self.args.fp16:
             raise NotImplementedError("Mixed precision is currently not supported.")
 
@@ -168,6 +171,9 @@ class TensorFlowBenchmark(Benchmark):
         assert (
             self.args.eager_mode is False
         ), "Training cannot be done in eager mode. Please make sure that `args.eager_mode = False`."
+
+        if self.args.parallelize:
+            raise NotImplementedError"parallelize() is not supported in tensorflow."
 
         if self.args.fp16:
             raise NotImplementedError("Mixed precision is currently not supported.")

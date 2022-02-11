@@ -734,7 +734,7 @@ class Benchmark(ABC):
                 self.save_to_csv(inference_result_memory, self.args.inference_memory_csv_file)
 
             if self.args.trace_memory_line_by_line:
-                self.print_fn("\n" + 20 * "=" + ("INFERENCE - MEMOMRY - LINE BY LINE - SUMMARY").center(40) + 20 * "=")
+                self.print_fn("\n" + 20 * "=" + ("INFERENCE - MEMORY - LINE BY LINE - SUMMARY").center(40) + 20 * "=")
                 self.print_memory_trace_statistics(inference_summary)
 
         if self.args.training:
@@ -793,6 +793,7 @@ class Benchmark(ABC):
             info["architecture"] = platform.architecture()[0]
             info["date"] = datetime.date(datetime.now())
             info["time"] = datetime.time(datetime.now())
+            info["parallelize"] = self.args.parallelize
             info["fp16"] = self.args.fp16
             info["use_multiprocessing"] = self.args.do_multi_processing
             info["only_pretrain_model"] = self.args.only_pretrain_model
@@ -811,11 +812,30 @@ class Benchmark(ABC):
                 info["num_gpus"] = 1  # TODO(PVP) Currently only single GPU is supported
                 if is_py3nvml_available():
                     nvml.nvmlInit()
-                    handle = nvml.nvmlDeviceGetHandleByIndex(self.args.device_idx)
-                    info["gpu"] = nvml.nvmlDeviceGetName(handle)
-                    info["gpu_ram_mb"] = bytes_to_mega_bytes(nvml.nvmlDeviceGetMemoryInfo(handle).total)
-                    info["gpu_power_watts"] = nvml.nvmlDeviceGetPowerManagementLimit(handle) / 1000
-                    info["gpu_performance_state"] = nvml.nvmlDeviceGetPerformanceState(handle)
+                    if self.args.parallelize:
+                        device_count = torch.cuda.device_count()
+                        info["num_gpus"] = device_count
+
+                        info["gpu"] = []
+                        info["gpu_ram_mb"] = 0
+                        info["gpu_power_watts"] = 0
+                        info["gpu_performance_state"] = []
+
+                        for i in range(device_count):
+                            handle = nvml.nvmlDeviceGetHandleByIndex(self.args.device_idx)
+                            info["gpu"].append(nvml.nvmlDeviceGetName(handle))
+                            info["gpu_ram_mb"] += bytes_to_mega_bytes(nvml.nvmlDeviceGetMemoryInfo(handle).total)
+                            info["gpu_power_watts"] += nvml.nvmlDeviceGetPowerManagementLimit(handle) / 1000
+                            info["gpu_performance_state"].append(nvml.nvmlDeviceGetPerformanceState(handle))
+                        
+                        info["gpu"] = ", ".join(info["gpu"])
+                        info["gpu_performance_state"] = ", ".join(info["gpu_performance_state"])
+                    else:
+                        handle = nvml.nvmlDeviceGetHandleByIndex(self.args.device_idx)
+                        info["gpu"] = nvml.nvmlDeviceGetName(handle)
+                        info["gpu_ram_mb"] = bytes_to_mega_bytes(nvml.nvmlDeviceGetMemoryInfo(handle).total)
+                        info["gpu_power_watts"] = nvml.nvmlDeviceGetPowerManagementLimit(handle) / 1000
+                        info["gpu_performance_state"] = nvml.nvmlDeviceGetPerformanceState(handle)
                     nvml.nvmlShutdown()
                 else:
                     logger.warning(

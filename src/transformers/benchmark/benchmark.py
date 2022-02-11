@@ -103,7 +103,10 @@ class PyTorchBenchmark(Benchmark):
             model = MODEL_MAPPING[config.__class__](config)
 
         model.eval()
-        model.to(self.args.device)
+        if self.args.parallelize:
+            model.parallelize()
+        else:
+            model.to(self.args.device)
 
         # encoder-decoder has vocab size saved differently
         vocab_size = config.vocab_size if hasattr(config, "vocab_size") else config.encoder.vocab_size
@@ -163,7 +166,10 @@ class PyTorchBenchmark(Benchmark):
             train_model = model
 
         model.train()
-        model.to(self.args.device)
+        if self.args.parallelize:
+            model.parallelize()
+        else:
+            model.to(self.args.device)
 
         # encoder-decoder has vocab size saved differently
         vocab_size = config.vocab_size if hasattr(config, "vocab_size") else config.encoder.vocab_size

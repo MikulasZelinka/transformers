@@ -66,6 +66,9 @@ class BenchmarkArguments:
     tpu: bool = field(
         default=True, metadata={"help": "Whether to run on available tpu devices. TPU can be disabled via --no-tpu."}
     )
+    parallelize: bool = field(
+        default=False, metadata={"help": "Whether to parallelize across available GPUs (only supported for specific models, like T5 or T0 in pytorch). Overrides other device selection methods and considers all GPUs to be used by the benchmark for stats purposes. Not supported for tensorflow models."}
+    )
     fp16: bool = field(default=False, metadata={"help": "Use FP16 to accelerate inference."})
     training: bool = field(default=False, metadata={"help": "Benchmark training of model"})
     verbose: bool = field(default=False, metadata={"help": "Verbose memory tracing"})
