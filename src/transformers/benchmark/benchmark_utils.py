@@ -813,30 +813,33 @@ class Benchmark(ABC):
                 info["num_gpus"] = 1  # TODO(PVP) Currently only single GPU is supported
                 if is_py3nvml_available():
                     nvml.nvmlInit()
+
+                    gpu_stat_to_fn = {
+                        "gpu": lambda handle: nvml.nvmlDeviceGetName(handle),
+                        "gpu_ram_mb": lambda handle: bytes_to_mega_bytes(nvml.nvmlDeviceGetMemoryInfo(handle).total),
+                        "gpu_power_watts": lambda handle: nvml.nvmlDeviceGetPowerManagementLimit(handle) / 1000,
+                        "gpu_performance_state": lambda handle: nvml.nvmlDeviceGetPerformanceState(handle),
+                    }
+
                     if self.args.parallelize and is_torch_available():
                         device_count = torch_device_count()
                         info["num_gpus"] = device_count
 
-                        info["gpu"] = []
-                        info["gpu_ram_mb"] = 0
-                        info["gpu_power_watts"] = 0
-                        info["gpu_performance_state"] = []
+                        for key in gpu_stat_to_fn:
+                            info[key] = []
 
                         for i in range(device_count):
                             handle = nvml.nvmlDeviceGetHandleByIndex(i)
-                            info["gpu"].append(nvml.nvmlDeviceGetName(handle))
-                            info["gpu_ram_mb"] += bytes_to_mega_bytes(nvml.nvmlDeviceGetMemoryInfo(handle).total)
-                            info["gpu_power_watts"] += nvml.nvmlDeviceGetPowerManagementLimit(handle) / 1000
-                            info["gpu_performance_state"].append(nvml.nvmlDeviceGetPerformanceState(handle))
-                        
-                        info["gpu"] = ", ".join(info["gpu"])
-                        info["gpu_performance_state"] = ", ".join(info["gpu_performance_state"])
+                            for key, key_fn in gpu_stat_to_fn.items():
+                                info[key].append(key_fn(handle))
+
+                        for key in gpu_stat_to_fn:
+                            info[key] = ", ".join(str(x) for x in info[key])
+
                     else:
                         handle = nvml.nvmlDeviceGetHandleByIndex(self.args.device_idx)
-                        info["gpu"] = nvml.nvmlDeviceGetName(handle)
-                        info["gpu_ram_mb"] = bytes_to_mega_bytes(nvml.nvmlDeviceGetMemoryInfo(handle).total)
-                        info["gpu_power_watts"] = nvml.nvmlDeviceGetPowerManagementLimit(handle) / 1000
-                        info["gpu_performance_state"] = nvml.nvmlDeviceGetPerformanceState(handle)
+                        for key, key_fn in gpu_stat_to_fn.items():
+                            info[key] = key_fn(handle)
                     nvml.nvmlShutdown()
                 else:
                     logger.warning(
