@@ -16,8 +16,8 @@
 
 import dataclasses
 import json
+import time
 from dataclasses import dataclass, field
-from time import time
 from typing import List
 
 from ..utils import logging
@@ -28,6 +28,10 @@ logger = logging.get_logger(__name__)
 
 def list_field(default=None, metadata=None):
     return field(default_factory=lambda: default, metadata=metadata)
+
+
+def readable_datetime():
+    return time.strftime("%Y-%m-%d_%H:%M:%S")
 
 
 @dataclass
@@ -93,27 +97,27 @@ class BenchmarkArguments:
         },
     )
     inference_time_csv_file: str = field(
-        default=f"inference_time_{round(time())}.csv",
+        default=f"inference_time_{readable_datetime()}.csv",
         metadata={"help": "CSV filename used if saving time results to csv."},
     )
     inference_memory_csv_file: str = field(
-        default=f"inference_memory_{round(time())}.csv",
+        default=f"inference_memory_{readable_datetime()}.csv",
         metadata={"help": "CSV filename used if saving memory results to csv."},
     )
     train_time_csv_file: str = field(
-        default=f"train_time_{round(time())}.csv",
+        default=f"train_time_{readable_datetime()}.csv",
         metadata={"help": "CSV filename used if saving time results to csv for training."},
     )
     train_memory_csv_file: str = field(
-        default=f"train_memory_{round(time())}.csv",
+        default=f"train_memory_{readable_datetime()}.csv",
         metadata={"help": "CSV filename used if saving memory results to csv for training."},
     )
     env_info_csv_file: str = field(
-        default=f"env_info_{round(time())}.csv",
+        default=f"env_info_{readable_datetime()}.csv",
         metadata={"help": "CSV filename used if saving environment information."},
     )
     log_filename: str = field(
-        default=f"log_{round(time())}.csv",
+        default=f"log_{readable_datetime()}.csv",
         metadata={"help": "Log filename used if print statements are saved in log."},
     )
     repeat: int = field(default=3, metadata={"help": "Times an experiment will be run."})
