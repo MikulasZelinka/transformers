@@ -39,6 +39,7 @@ from .benchmark_args_utils import BenchmarkArguments
 
 if is_torch_available():
     from torch.cuda import empty_cache as torch_empty_cache
+    from torch.cuda import device_count as torch_device_count
 
 if is_tf_available():
     from tensorflow.python.eager import context as tf_context
@@ -753,7 +754,7 @@ class Benchmark(ABC):
                 self.save_to_csv(train_result_memory, self.args.train_memory_csv_file)
 
             if self.args.trace_memory_line_by_line:
-                self.print_fn("\n" + 20 * "=" + ("TRAIN - MEMOMRY - LINE BY LINE - SUMMARY").center(40) + 20 * "=")
+                self.print_fn("\n" + 20 * "=" + ("TRAIN - MEMORY - LINE BY LINE - SUMMARY").center(40) + 20 * "=")
                 self.print_memory_trace_statistics(train_summary)
 
         if self.args.env_print:
@@ -812,8 +813,8 @@ class Benchmark(ABC):
                 info["num_gpus"] = 1  # TODO(PVP) Currently only single GPU is supported
                 if is_py3nvml_available():
                     nvml.nvmlInit()
-                    if self.args.parallelize:
-                        device_count = torch.cuda.device_count()
+                    if self.args.parallelize and is_torch_available():
+                        device_count = torch_device_count()
                         info["num_gpus"] = device_count
 
                         info["gpu"] = []
