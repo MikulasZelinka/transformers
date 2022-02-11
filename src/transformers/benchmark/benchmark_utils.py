@@ -822,7 +822,7 @@ class Benchmark(ABC):
                         info["gpu_performance_state"] = []
 
                         for i in range(device_count):
-                            handle = nvml.nvmlDeviceGetHandleByIndex(self.args.device_idx)
+                            handle = nvml.nvmlDeviceGetHandleByIndex(i)
                             info["gpu"].append(nvml.nvmlDeviceGetName(handle))
                             info["gpu_ram_mb"] += bytes_to_mega_bytes(nvml.nvmlDeviceGetMemoryInfo(handle).total)
                             info["gpu_power_watts"] += nvml.nvmlDeviceGetPowerManagementLimit(handle) / 1000
