@@ -230,6 +230,12 @@ class PyTorchBenchmark(Benchmark):
             return "N/A"
 
     def _measure_memory(self, func: Callable[[], None]) -> [Memory, MemorySummary]:
+
+        def _measure_memory_for_index(index):
+            handle = nvml.nvmlDeviceGetHandleByIndex(index)
+            meminfo = nvml.nvmlDeviceGetMemoryInfo(handle)
+            return meminfo.used
+
         try:
             if self.args.trace_memory_line_by_line:
                 trace = start_memory_tracing("transformers")
@@ -253,10 +259,18 @@ class PyTorchBenchmark(Benchmark):
                     # init nvml
                     nvml.nvmlInit()
                     func()
-                    handle = nvml.nvmlDeviceGetHandleByIndex(self.args.device_idx)
-                    meminfo = nvml.nvmlDeviceGetMemoryInfo(handle)
-                    max_bytes_in_use = meminfo.used
-                    memory = Memory(max_bytes_in_use)
+
+                    memory_used = 0
+                    if self.args.parallelize and is_torch_available():
+                        device_count = torch.cuda.device_count()
+
+                        for i in range(device_count):
+                            memory_used += _measure_memory_for_index(i)
+
+                    else:
+                        memory_used += _measure_memory_for_index(self.args.device_idx)
+
+                    memory = Memory(memory_used)
                     # shutdown nvml
                     nvml.nvmlShutdown()
             else:
